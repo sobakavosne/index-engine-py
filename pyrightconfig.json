@@ -1,0 +1,14 @@
+{
+  "venvPath": "/home/s/dev/python/index-engine-py",
+  "venv": "venv",
+  "pythonVersion": "3.12",
+  "pythonPlatform": "Linux",
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux"
+    }
+  ],
+  "typeCheckingMode": "basic"
+}
