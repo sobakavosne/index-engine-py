@@ -319,11 +319,10 @@ def test_recursion_overflow_scenario():
             
             # Set a low recursion limit AFTER data loading
             # Use a limit that's less than required depth but not too low
+            # Need to leave enough room for Python's own operations (at least 30-40)
             test_limit = min(required_depth - 5, 50)  # Ensure it's less than required depth
-            if test_limit < 20:  # Safety check - don't go too low
-                test_limit = 20
-            
-            sys.setrecursionlimit(test_limit)
+            if test_limit < 30:  # Safety check - need room for Python's own operations
+                test_limit = 30
             
             # Verify that required depth exceeds the test limit
             assert required_depth > test_limit, (
@@ -331,11 +330,28 @@ def test_recursion_overflow_scenario():
                 f"Try increasing the number of dates in the test CSV."
             )
             
+            # Set recursion limit right before the call that should fail
+            sys.setrecursionlimit(test_limit)
+            
             # Attempting to compute the last date should raise RecursionError
             # because it requires recursion depth > test_limit
-            # Note: We can't use match parameter here because regex compilation also uses recursion
-            with pytest.raises(RecursionError):
+            # Use try-except instead of pytest.raises to avoid recursion issues with pytest itself
+            recursion_error_raised = False
+            try:
                 strategy.compute_state(last_date)
+                # If we get here, the recursion error wasn't raised
+            except RecursionError:
+                # This is the expected behavior - recursion limit was exceeded
+                recursion_error_raised = True
+            except Exception as e:
+                # If we get a different exception, that's unexpected
+                pytest.fail(f"Expected RecursionError, but got {type(e).__name__}: {e}")
+            
+            # Verify that RecursionError was actually raised
+            assert recursion_error_raised, (
+                "Expected RecursionError to be raised when recursion depth exceeds limit, "
+                "but computation succeeded"
+            )
                 
         finally:
             if os.path.exists(temp_file):
